@@ -1,6 +1,7 @@
 from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+import time
 
 class NewVisitorTest(LiveServerTestCase):
 
@@ -38,7 +39,6 @@ class NewVisitorTest(LiveServerTestCase):
 		#"1: Buy peacock feathers" as an item in a to-do list
 		inputbox.send_keys(Keys.ENTER)
 		
-		import time
 		time.sleep(1)
 		
 		edith_list_url = self.browser.current_url
@@ -74,6 +74,8 @@ class NewVisitorTest(LiveServerTestCase):
 		inputbox = self.browser.find_element_by_id('id_new_item')
 		inputbox.send_keys('Buy milk')
 		inputbox.send_keys(Keys.ENTER)
+		
+		time.sleep(1)
 		
 		#Francis gets his own unique URL
 		francis_list_url = self.browser.current_url
