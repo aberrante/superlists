@@ -18,11 +18,11 @@ class ItemValidationTest(FunctionalTest):
 		
 		#She tries again with some text for the item, which now works;
 		self.browser.find_element_by_id('id_new_item').send_keys('Buy milk')
-		self.browser.find.element_by_id('id_new_item').send_keys(keys.ENTER)
+		self.browser.find_element_by_id('id_new_item').send_keys(Keys.ENTER)
 		self.wait_for_row_in_list_table('1: Buy milk')
 		
 		#Perversely, she now decide to submit a second blank list item
-		self.browser.find_element_by_id('id_new_item').send_keys(keys.ENTER)
+		self.browser.find_element_by_id('id_new_item').send_keys(Keys.ENTER)
 		
 		#She receives a similar warning on the list page
 		self.wait_for(lambda: self.assertEqual(
@@ -32,7 +32,7 @@ class ItemValidationTest(FunctionalTest):
 		
 		#And she can correct it by filling some text in 
 		self.browser.find_element_by_id('id_new_item').send_keys('Make tea')
-		self.browser.find_element_by_id('id_new_item').send_keys(keys.ENTER)
+		self.browser.find_element_by_id('id_new_item').send_keys(Keys.ENTER)
 		self.wait_for_row_in_list_table('1: Buy milk')
 		self.wait_for_row_in_list_table('2: Make tea')
 		

@@ -26,7 +26,8 @@ SECRET_KEY = 'f186m7d8%3l8f=fe@$2vlfyeieq$xa&3p6-5x0em0s_yw1wd)$'
 DEBUG = True
 
 ALLOWED_HOSTS = ['superlists-stage.oddityhub.com',
-				 'superlists.oddityhub.com',]
+				 'superlists.oddityhub.com',
+				 'localhost',]
 
 
 # Application definition
