@@ -1,6 +1,2 @@
 django==1.11
-<<<<<<< HEAD
 gunicorn==19.7.1
-=======
-gunicorn==19.7.1
->>>>>>> eec5ef360ad65453a1c667fd291dccb252218ba5
