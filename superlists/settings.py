@@ -25,9 +25,7 @@ SECRET_KEY = 'f186m7d8%3l8f=fe@$2vlfyeieq$xa&3p6-5x0em0s_yw1wd)$'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['superlists-stage.oddityhub.com',
-				 'superlists.oddityhub.com',
-				 'localhost',]
+ALLOWED_HOSTS = []
 
 
 # Application definition
