@@ -1,5 +1,5 @@
 from fabric.contrib.files import append, exists, sed
-from fabric.api import env, local, run
+from fabric.api import env, local, run, sudo
 import random
 
 REPO_URL = 'https://github.com/aberrante/superlists.git'
@@ -16,8 +16,10 @@ def deploy():
 	_update_database(source_folder)
 
 def _install_dependencies():
-	run('sudo apt-get -y install python3-venv')
-	run('sudo apt-get -y install nginx')
+	# run('sudo apt-get -y install python3-venv')
+	sudo('apt-get -y install python3-venv')
+	# run('sudo apt-get -y install nginx')
+	sudo('apt-get -y install nginx')
 	
 def _create_directory_structure_if_necessary(site_folder):
 	for subfolder in ('database', 'static', 'virtualenv', 'source'):
