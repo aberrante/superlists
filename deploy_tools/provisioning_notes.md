@@ -21,6 +21,7 @@ sudo apt-get install nginx git python36 python3.6-venv
 
 + see gunicorn-systemd.template.service
 + replace SITENAME with, eg, staging.mydomain.com
++ replace SEKRIT with email password
 
 ## Folder structure:
 
