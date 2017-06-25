@@ -1,10 +1,14 @@
 from django.test import TestCase
 from django.utils.html import escape
 from django.contrib.auth import get_user_model
+from unittest.mock import patch, Mock
+from django.http import HttpRequest
 
-from lists.views import home_page
+from lists.views import home_page, new_list
 from lists.models import Item, List
 from lists.forms import ItemForm, ExistingListItemForm, EMPTY_ITEM_ERROR, DUPLICATE_ITEM_ERROR
+
+import unittest
 
 User = get_user_model()
 
@@ -47,25 +51,65 @@ class NewListTest(TestCase):
 		self.client.post('/lists/new', data = {'text': ''})
 		self.assertEqual(List.objects.count(), 0)
 		self.assertEqual(Item.objects.count(), 0)
+	
+	def test_list_owner_is_saved_if_user_is_authenticated(self):
+		user = User.objects.create(email = 'a@b.com')
+		self.client.force_login(user)
+		self.client.post('/lists/new', data = {'text': 'new item'})
+		list_ = List.objects.first()
+		self.assertEqual(list_.owner, user)
+
+@patch('lists.views.NewListForm')
+class NewListViewUnitTest(unittest.TestCase):
+	def setUp(self):
+		self.request = HttpRequest()
+		self.request.POST['text'] = 'new list item'
+		self.request.user = Mock()
+	
+	def test_passes_POST_data_to_NewListForm(self, mockNewListForm):
+		new_list(self.request)
+		mockNewListForm.assert_called_once_with(data = self.request.POST)
+	
+	def test_saves_form_with_owner_if_form_valid(self, mockNewListForm):
+		mock_form = mockNewListForm.return_value
+		mock_form.is_valid.return_value = True
+		new_list(self.request)
+		mock_form.save.assert_called_once_with(owner=self.request.user)
+	
+	@patch('lists.views.redirect')
+	def test_redirects_to_form_return_object_if_form_valid(
+		self, mock_redirect, mockNewListForm
+	):
+		mock_form = mockNewListForm.return_value
+		mock_form.is_valid.return_value = True
+		
+		response = new_list(self.request)
+		
+		self.assertEqual(response, mock_redirect.return_value)
+		mock_redirect.assert_called_once_with(mock_form.save.return_value)
+		
+	@patch('lists.views.render')
+	def test_renders_home_template_with_form_if_form_invalid(
+		self, mock_render, mockNewListForm
+	):
+		mock_form = mockNewListForm.return_value
+		mock_form.is_valid.return_value = False
+		
+		response = new_list(self.request)
+		self.assertEqual(response, mock_render.return_value)
+		mock_render.assert_called_once_with(
+			self.request, 'home.html', {'form': mock_form}
+		)
+	
+	def test_does_not_save_if_form_invalid(self, mockNewListForm):
+		mock_form = mockNewListForm.return_value
+		mock_form.is_valid.return_value = False
+		new_list(self.request)
+		self.assertFalse(mock_form.save.called)
+		
 		
 class ListViewTest(TestCase):
 
-	def test_displays_only_items_for_that_list(self):
-		correct_list = List.objects.create()
-		Item.objects.create(text = 'itemey 1', list = correct_list)
-		Item.objects.create(text = 'itemey 2', list = correct_list)
-		
-		other_list = List.objects.create()
-		Item.objects.create(text = 'other list item 1', list = other_list)
-		Item.objects.create(text = 'other list item 2', list = other_list)
-		
-		response = self.client.get('/lists/%d/' % (correct_list.id,))
-		
-		self.assertContains(response, 'itemey 1')
-		self.assertContains(response, 'itemey 2')
-		self.assertNotContains(response, 'other list item 1')
-		self.assertNotContains(response, 'other list item 2')
-	
 	def test_uses_list_templates(self):
 		list_ = List.objects.create()
 		response = self.client.get('/lists/%d/' % (list_.id,))
@@ -86,6 +130,22 @@ class ListViewTest(TestCase):
 		new_item = Item.objects.first()
 		self.assertEqual(new_item.text, 'A new item for an existing list')
 		self.assertEqual(new_item.list, correct_list)
+		
+	def test_displays_only_items_for_that_list(self):
+		correct_list = List.objects.create()
+		Item.objects.create(text = 'itemey 1', list = correct_list)
+		Item.objects.create(text = 'itemey 2', list = correct_list)
+		
+		other_list = List.objects.create()
+		Item.objects.create(text = 'other list item 1', list = other_list)
+		Item.objects.create(text = 'other list item 2', list = other_list)
+		
+		response = self.client.get('/lists/%d/' % (correct_list.id,))
+		
+		self.assertContains(response, 'itemey 1')
+		self.assertContains(response, 'itemey 2')
+		self.assertNotContains(response, 'other list item 1')
+		self.assertNotContains(response, 'other list item 2')
 		
 	def test_POST_redirects_to_list_view(self):
 		other_list = List.objects.create()
@@ -143,10 +203,23 @@ class MyListsTest(TestCase):
 		correct_user = User.objects.create(email = 'a@b.com')
 		response = self.client.get('/lists/users/a@b.com/')
 		self.assertEqual(response.context['owner'], correct_user)
+		
+class NewListViewIntegratedTest(TestCase):
+	def test_can_save_a_POST_request(self):
+		self.client.post('/lists/new', data = {'text': 'A new list item'})
+		self.assertEqual(Item.objects.count(), 1)
+		new_item = Item.objects.first()
+		self.assertEqual(new_item.text, 'A new list item')
 	
+	def test_for_invalid_input_doesnt_save_but_shows_error(self):
+		response = self.client.post('/lists/new', data = {'text': ''})
+		self.assertEqual(List.objects.count(), 0)
+		self.assertContains(response, escape(EMPTY_ITEM_ERROR))
+		
 	def test_list_owner_is_saved_if_user_is_authenticated(self):
 		user = User.objects.create(email = 'a@b.com')
 		self.client.force_login(user)
 		self.client.post('/lists/new', data = {'text': 'new item'})
 		list_ = List.objects.first()
 		self.assertEqual(list_.owner, user)
+	
