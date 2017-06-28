@@ -12,6 +12,18 @@ from .management.commands.create_session import create_pre_authenticated_session
 
 MAX_WAIT = 10
 
+def wait(fn):
+	def modified_fn(*args, **kwargs):
+		start_time = time.time()
+		while True:
+			try:
+				return fn(*args, **kwargs)
+			except (AssertionError, WebDriverException) as e:
+				if time.time() - start_time > MAX_WAIT:
+					raise e
+				time.sleep(0.5)
+	return modified_fn
+
 SCREEN_DUMP_LOCATION = os.path.join(
 	os.path.dirname(os.path.dirname(__file__)), 'screendumps'
 )
@@ -63,18 +75,6 @@ class FunctionalTest(StaticLiveServerTestCase):
 		
 	def get_item_input_box(self):
 		return self.browser.find_element_by_id('id_text')
-	
-	def wait(fn):
-		def modified_fn(*args, **kwargs):
-			start_time = time.time()
-			while True:
-				try:
-					return fn(*args, **kwargs)
-				except (AssertionError, WebDriverException) as e:
-					if time.time() - start_time > MAX_WAIT:
-						raise e
-					time.sleep(0.5)
-		return modified_fn
 	
 	@wait
 	def wait_for_row_in_list_table(self, row_text):
