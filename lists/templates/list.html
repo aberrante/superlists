@@ -8,12 +8,13 @@
 			<tr><td>{{forloop.counter}}: {{ item.text }}</td></tr>
 		{% endfor %}
 	</table>
+	<p id = "id_list_owner">{{ list.owner.email }}</p> 
 {% endblock %}
 
 {% block extra_content %}
 	<div class = "row">
 		<div class = "col-md-3">
-			<h3>Share your list:</h3>
+			<h3>Share this list:</h3>
 			<form method = "POST" action = "{% url 'share_list' list.id %}">
 				{% csrf_token %}
 				<input name = "sharee" placeholder = "your-friend@example.com" />
